@@ -12,7 +12,7 @@ Arduino compatible board (adafruit Metro mini ___LINK__) reads data from a gps u
 Initial Testing:
 Rail Trail path with 5 waypoints for triggering different sounds
 
-Board Communication Information:
+Board Communication and Processing/Processes Information:
 
 Arduino compatible outputs via serial two datatypes:
   -"No Fix"   --this happens if the GPS unit cannot get a fix on the location and you are "lost"
