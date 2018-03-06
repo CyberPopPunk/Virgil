@@ -19,7 +19,7 @@
 
 #include <FastLED.h>
 #define PIN            4
-#define NUMPIXELS      1
+#define NUMPIXELS      24
 CRGB leds[NUMPIXELS];
 int fadeRate,
     pulseRate,
@@ -31,6 +31,10 @@ int fadeRate,
     newSat,
     newVib,
     white = 23;
+
+boolean flashlightState = false;
+int flashlightPin = 5;
+int breakoutRead;
 
 char tmp[1] = "a";
 
@@ -51,6 +55,7 @@ boolean usingInterrupt = false;
 void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy
 
 void setup()  {
+  pinMode(flashlightPin, INPUT);
   FastLED.addLeds<NEOPIXEL, PIN>(leds, NUMPIXELS);
   bulb(0, 0, 0); //clear bulb from last poweron
   Serial.begin(115200); //115200 to read the GPS fast enough and echo without dropping chars
@@ -91,6 +96,29 @@ void useInterrupt(boolean v) {
 uint32_t timer = millis();
 
 void loop() {
+  //FLASHLIGHT MODE BY PRESSING BUTTON
+  //read the pin
+  int pinReading = digitalRead(flashlightPin);
+  if (pinReading == HIGH) { //if btn pressed
+    delay(275);
+    if (flashlightState) {
+      while (flashlightState) {
+        bulb(0, 0, 255);
+        Serial.println("FLASHLIGHTMODE");
+        if (digitalRead(flashlightPin) == HIGH) {
+          bulb(0, 0, 0);
+          Serial.print("FLASHLIGHT OFF!");
+          flashlightState = !flashlightState;
+          delay(500);
+          break;
+        }
+      }
+    }
+    flashlightState = !flashlightState;
+  }
+
+
+
   if (GPS.newNMEAreceived()) {
     if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
       return;  // we can fail to parse a sentence in which case we should just wait for another
@@ -132,16 +160,13 @@ void loop() {
       else {
         //Serial.println("Changing without Fading...");
         allChange(true);
-        //bothChange();
         resetValues();
-        //Serial.println("values Reset....");
       }
-      //reassign new values as current
     }
     if (pulseRate > 0) {
       pulse(pulseRate);
     }
-    if (rainbowRate > 0){
+    if (rainbowRate > 0) {
       rainbow(rainbowRate);
     }
 
@@ -254,5 +279,3 @@ void rainbow(int rate) {
     delay(rate * 7);
   }
 }
-
-
