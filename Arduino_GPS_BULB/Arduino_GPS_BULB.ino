@@ -33,6 +33,7 @@ int fadeRate,
     white = 23;
 
 boolean flashlightState = false;
+boolean messageSent = false;
 int flashlightPin = 5;
 int breakoutRead;
 
@@ -99,25 +100,27 @@ void loop() {
   //FLASHLIGHT MODE BY PRESSING BUTTON
   //read the pin
   int pinReading = digitalRead(flashlightPin);
-  if (pinReading == HIGH) { //if btn pressed
+  //Serial.println(flashlightState);
+  if (pinReading == HIGH) { //if btn pressed   
+    flashlightState = !flashlightState;
     delay(275);
     if (flashlightState) {
       while (flashlightState) {
-        bulb(0, 0, 255);
-        Serial.println("FLASHLIGHTMODE");
+        if (messageSent == false) {
+          delay(100);
+          Serial.println("FLASHLIGHT MODE");
+          messageSent = true;
+        }
         if (digitalRead(flashlightPin) == HIGH) {
-          bulb(0, 0, 0);
-          Serial.print("FLASHLIGHT OFF!");
+          //Serial.print("FLASHLIGHT OFF!");
           flashlightState = !flashlightState;
+          messageSent = false;
           delay(500);
           break;
         }
       }
     }
-    flashlightState = !flashlightState;
   }
-
-
 
   if (GPS.newNMEAreceived()) {
     if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
@@ -171,12 +174,12 @@ void loop() {
     }
 
     //..........GPS DETECTION AND SERIAL TRANSMISSION
-    if (GPS.fix) {
+    if (GPS.fix && !flashlightState) {
       Serial.print(GPS.latitudeDegrees, 4);
       Serial.print(",");
       Serial.println(GPS.longitudeDegrees, 4);
     }
-    else {
+    else if(!GPS.fix && !flashlightState) {
       Serial.println("No Fix");
     }
   }
