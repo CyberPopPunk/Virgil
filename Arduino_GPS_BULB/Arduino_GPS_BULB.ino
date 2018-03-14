@@ -61,6 +61,9 @@ void setup()  {
   bulb(0, 0, 0); //clear bulb from last poweron
   Serial.begin(115200); //115200 to read the GPS fast enough and echo without dropping chars
   GPS.begin(9600);
+  while (!Serial) {
+    ;
+  }
   // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
 
@@ -73,7 +76,8 @@ void setup()  {
   // every 1 millisecond, and read data from the GPS for you. that makes the
   // loop code a heck of a lot easier!
   useInterrupt(true);
-  pinMode(13, OUTPUT);
+  establishContact();
+  //pinMode(13, OUTPUT);
 }
 // Interrupt is called once a millisecond, looks for any new GPS data, and stores it
 SIGNAL(TIMER0_COMPA_vect) {
@@ -97,14 +101,15 @@ void useInterrupt(boolean v) {
 uint32_t timer = millis();
 
 void loop() {
+
   //FLASHLIGHT MODE BY PRESSING BUTTON
-  //read the pin
   int pinReading = digitalRead(flashlightPin);
-  //Serial.println(flashlightState);
-  if (pinReading == HIGH) { //if btn pressed   
+  delay(50);
+  if (pinReading == HIGH) { //if btn pressed
     flashlightState = !flashlightState;
     delay(275);
     if (flashlightState) {
+      bulb(0,0,255);
       while (flashlightState) {
         if (messageSent == false) {
           delay(100);
@@ -115,6 +120,7 @@ void loop() {
           //Serial.print("FLASHLIGHT OFF!");
           flashlightState = !flashlightState;
           messageSent = false;
+          bulb(0, 0, 0);
           delay(500);
           break;
         }
@@ -122,6 +128,7 @@ void loop() {
     }
   }
 
+  //Start GPS Parsing
   if (GPS.newNMEAreceived()) {
     if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
       return;  // we can fail to parse a sentence in which case we should just wait for another
@@ -135,55 +142,54 @@ void loop() {
     //NEEDS TO BE HERE SO INTERRUPTS AND GPS DON'T AFFECT IT
 
     while (Serial.available() > 0) {
-      newHue = Serial.parseInt();
-      newSat = Serial.parseInt();
-      newVib = Serial.parseInt();
-      fadeRate = Serial.parseInt();
-      pulseRate = Serial.parseInt();
-      rainbowRate = Serial.parseInt();
+        newHue = Serial.parseInt();
+        newSat = Serial.parseInt();
+        newVib = Serial.parseInt();
+        fadeRate = Serial.parseInt();
+        pulseRate = Serial.parseInt();
+        rainbowRate = Serial.parseInt();
 
-      //My Own Serial Flush
-      while (Serial.available() > 0) {
-        Serial.parseInt();
-      }
-      if (fadeRate > 0) {
-        fadeDown(fadeRate);//fadeDown Vibrancy
-        //Serial.print("fading Down");
-        allChange(false); //change values wihout showing
-        //Serial.print("changing Values");
-        resetValues(); //reset values to current
-        //Serial.print("resetting Values");
-        if (pulseRate > 0) {
-          fadeUp(pulseRate);
+        //My Own Serial Flush
+        while (Serial.available() > 0) {
+          Serial.parseInt();
+        }
+        if (fadeRate > 0) {
+          fadeDown(fadeRate);//fadeDown Vibrancy
+          //Serial.print("fading Down");
+          allChange(false); //change values wihout showing
+          //Serial.print("changing Values");
+          resetValues(); //reset values to current
+          //Serial.print("resetting Values");
+          if (pulseRate > 0) {
+            fadeUp(pulseRate);
+          }
+          else {
+            fadeUp(fadeRate);
+          }
         }
         else {
-          fadeUp(fadeRate);
+          //Serial.println("Changing without Fading...");
+          allChange(true);
+          resetValues();
+        }
+        if (pulseRate > 0) {
+          pulse(pulseRate);
+        }
+        if (rainbowRate > 0) {
+          rainbow(rainbowRate);
         }
       }
-      else {
-        //Serial.println("Changing without Fading...");
-        allChange(true);
-        resetValues();
+      //..........GPS DETECTION AND SERIAL TRANSMISSION
+      if (GPS.fix && !flashlightState) {
+        Serial.print(GPS.latitudeDegrees, 4);
+        Serial.print(",");
+        Serial.println(GPS.longitudeDegrees, 4);
+      }
+      else if (!GPS.fix && !flashlightState) {
+      Serial.println("No Fix");
       }
     }
-    if (pulseRate > 0) {
-      pulse(pulseRate);
-    }
-    if (rainbowRate > 0) {
-      rainbow(rainbowRate);
-    }
-
-    //..........GPS DETECTION AND SERIAL TRANSMISSION
-    if (GPS.fix && !flashlightState) {
-      Serial.print(GPS.latitudeDegrees, 4);
-      Serial.print(",");
-      Serial.println(GPS.longitudeDegrees, 4);
-    }
-    else if(!GPS.fix && !flashlightState) {
-      Serial.println("No Fix");
-    }
   }
-}
 
 void bulb( int h, int s, int v) {
   for (int i = 0; i < NUMPIXELS; i++) {
@@ -280,5 +286,12 @@ void rainbow(int rate) {
   for (int i = 0; i < 255; i++) {
     bulb(i + currHue, currSat, currVib);
     delay(rate * 7);
+  }
+}
+
+void establishContact() {
+  while (Serial.available() <= 0) {
+    Serial.write('A');   // send a capital A
+    delay(2000);
   }
 }
