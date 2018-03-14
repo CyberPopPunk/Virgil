@@ -1,10 +1,10 @@
 # Virgil
-Lanturn style GPS-based immersive storytelling project
+Lantern style GPS-based immersive storytelling project
 
 Virgil is an immersive storytelling project that is bridging the worlds of digital storytelling and pervasive games.
 
 Overview:
-A player walks along a preset trail guided by a physical lanturn that emits RGB colored lights and sound/story (via headphone jack) to the user. As they walk along they are guided by story and environment that creates an engulfing realistic experience.
+A player walks along a preset trail guided by a physical lantern that emits RGB colored lights and sound/story (via headphone jack) to the user. As they walk along they are guided by story and environment that creates an engulfing realistic experience.
 
 Technical Overview:
 Arduino compatible board (adafruit Metro mini adafruit.com/product/2590) reads data from a gps unit (adafruit ultimate GPS adafruit.com/product/746) and sends that over serial to a connected raspberry pi zero or pi3+( raspberrypi.org/products/raspberry-pi-3-model-b/). The raspberry pi uses processing or python to interpret the serial data, analyze preset coordinates and play corresponding sounds out of the headphone port (on a piZero use a PhatDac shop.pimoroni.com/products/phat-dac) and send RGB data out to the arduino accordingly.
