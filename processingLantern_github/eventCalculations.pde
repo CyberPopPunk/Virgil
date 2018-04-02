@@ -2,7 +2,7 @@ void eventTrigger(int trackNumber) {
   //play a track from tracknumber parameter, tracks replay after about 5 minutes and
   //a track will play immediately once the game has started to avoid an error
   if (track[trackNumber].isPlaying()) {
-    //println("still playing");
+    println("still playing");
   } else if (trackNumber == bgMusic && prevTrack == noFixTrack) { //if intermission Music and light sent is played
     track[prevTrack].pause();
     bgLight();
@@ -20,7 +20,7 @@ void eventTrigger(int trackNumber) {
     println("No Fix track queued");
     if ( prevTrack == noFixTrack) {
       println("noFix Track with prevTrack NoFix");
-      track[flTrack].play(0);
+      track[noFixTrack].play(0);
     }
     println("noFixTrack played first time");
     track[prevTrack].pause();
