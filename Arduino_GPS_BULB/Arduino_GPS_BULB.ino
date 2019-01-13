@@ -1,6 +1,6 @@
 /***
   GPS LANTURN STORY PROJECT 0.7
-  Jan 17 '18
+  Jan 13 '19
 
   - function to skip around 256 limit for hue if closer ie 250 rollover 10 instead of 250 - 240 and cycle through colors
   - remove startup light etc within Arduino and Send from processing
@@ -20,6 +20,7 @@
 #include <FastLED.h>
 #define PIN            4
 #define NUMPIXELS      24
+#define end_tx         10
 CRGB leds[NUMPIXELS];
 int fadeRate,
     pulseRate,
@@ -75,8 +76,8 @@ void setup()  {
   // the nice thing about this code is you can have a timer0 interrupt go off
   // every 1 millisecond, and read data from the GPS for you. that makes the
   // loop code a heck of a lot easier!
-  useInterrupt(true);
   establishContact();
+  useInterrupt(true);
   //pinMode(13, OUTPUT);
 }
 // Interrupt is called once a millisecond, looks for any new GPS data, and stores it
@@ -109,7 +110,7 @@ void loop() {
     flashlightState = !flashlightState;
     delay(275);
     if (flashlightState) {
-      bulb(0,0,255);
+      bulb(0, 0, 255);
       while (flashlightState) {
         if (messageSent == false) {
           delay(100);
@@ -142,54 +143,71 @@ void loop() {
     //NEEDS TO BE HERE SO INTERRUPTS AND GPS DON'T AFFECT IT
 
     while (Serial.available() > 0) {
-        newHue = Serial.parseInt();
-        newSat = Serial.parseInt();
-        newVib = Serial.parseInt();
-        fadeRate = Serial.parseInt();
-        pulseRate = Serial.parseInt();
-        rainbowRate = Serial.parseInt();
+      newHue = Serial.parseInt();
+      newSat = Serial.parseInt();
+      newVib = Serial.parseInt();
+      fadeRate = Serial.parseInt();
+      pulseRate = Serial.parseInt();
+      rainbowRate = Serial.parseInt();
+      int light_inputs[] = {newHue, newSat, newVib, fadeRate, pulseRate, rainbowRate};
 
-        //My Own Serial Flush
+      //My Own Serial Flush
+      //if (Serial.peek() != '\n') {
         while (Serial.available() > 0) {
           Serial.parseInt();
         }
-        if (fadeRate > 0) {
-          fadeDown(fadeRate);//fadeDown Vibrancy
-          //Serial.print("fading Down");
-          allChange(false); //change values wihout showing
-          //Serial.print("changing Values");
-          resetValues(); //reset values to current
-          //Serial.print("resetting Values");
-          if (pulseRate > 0) {
-            fadeUp(pulseRate);
-          }
-          else {
-            fadeUp(fadeRate);
-          }
+      //}
+      if (fadeRate > 0) {
+        fadeDown(fadeRate);//fadeDown Vibrancy
+        //Serial.print("fading Down");
+        allChange(false); //change values wihout showing
+        //Serial.print("changing Values");
+        resetValues(); //reset values to current
+        //Serial.print("resetting Values");
+        if (pulseRate > 0) {
+          fadeUp(pulseRate);
         }
         else {
-          //Serial.println("Changing without Fading...");
-          allChange(true);
-          resetValues();
-        }
-        if (pulseRate > 0) {
-          pulse(pulseRate);
-        }
-        if (rainbowRate > 0) {
-          rainbow(rainbowRate);
+          fadeUp(fadeRate);
         }
       }
-      //..........GPS DETECTION AND SERIAL TRANSMISSION
-      if (GPS.fix && !flashlightState) {
-        Serial.print(GPS.latitudeDegrees, 4);
-        Serial.print(",");
-        Serial.println(GPS.longitudeDegrees, 4);
+      else {
+        //Serial.println("Changing without Fading...");
+        allChange(true);
+        resetValues();
       }
-      else if (!GPS.fix && !flashlightState) {
-      Serial.println("No Fix");
+      if (pulseRate > 0) {
+        pulse(pulseRate);
+      }
+      if (rainbowRate > 0) {
+        rainbow(rainbowRate);
       }
     }
+    send_GPS();
+//    //..........GPS DETECTION AND SERIAL TRANSMISSION
+//    if (GPS.fix && !flashlightState) {
+//      Serial.print(GPS.latitudeDegrees, 4);
+//      Serial.print(",");
+//      Serial.println(GPS.longitudeDegrees, 4);
+//    }
+//    else if (!GPS.fix && !flashlightState) {
+//      Serial.println("No Fix");
+//    }
   }
+}
+
+void send_GPS(){
+ //..........GPS DETECTION AND SERIAL TRANSMISSION
+    if (GPS.fix && !flashlightState) {
+      Serial.print(GPS.latitudeDegrees, 4);
+      Serial.print(",");
+      Serial.println(GPS.longitudeDegrees, 4);
+    }
+    else if (!GPS.fix && !flashlightState) {
+      Serial.println("No Fix");
+    }
+}
+
 
 void bulb( int h, int s, int v) {
   for (int i = 0; i < NUMPIXELS; i++) {
@@ -215,8 +233,11 @@ void fadeUp(int tmpFadeRate) {
 }
 
 void pulse(int pulseRate) {
+  while (Serial.available() <= 0){
   fadeDown(pulseRate);
   fadeUp(pulseRate);
+  send_GPS();
+}
 }
 
 
@@ -283,15 +304,23 @@ void resetValues() {
 }
 
 void rainbow(int rate) {
+  while (Serial.available() <=0){
   for (int i = 0; i < 255; i++) {
     bulb(i + currHue, currSat, currVib);
     delay(rate * 7);
   }
+  send_GPS();
+}
 }
 
 void establishContact() {
   while (Serial.available() <= 0) {
-    Serial.write('A');   // send a capital A
-    delay(2000);
+    Serial.write('A');   // send a capital
+    Serial.write(10);
+    delay(200);
+  }
+  while (Serial.available() > 0) {
+    Serial.read();
   }
 }
+

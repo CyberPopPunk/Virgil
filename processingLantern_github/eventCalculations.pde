@@ -1,5 +1,5 @@
 void eventTrigger(int trackNumber) {
-  //play a track from tracknumber parameter, tracks replay after about 5 minutes and
+  //play a track from tracknumber parameter, tracks replay after finished if in same location and
   //a track will play immediately once the game has started to avoid an error
   if (track[trackNumber].isPlaying()) {
     println("still playing");
@@ -20,10 +20,11 @@ void eventTrigger(int trackNumber) {
     println("No Fix track queued");
     if ( prevTrack == noFixTrack) {
       println("noFix Track with prevTrack NoFix");
-      track[noFixTrack].play(0);
     }
-    println("noFixTrack played first time");
-    track[prevTrack].pause();
+    else{
+      println("noFixTrack played first time");
+      track[prevTrack].pause();
+    }
     noFixLight();
     track[trackNumber].play(0);
   } else if (trackNumber == flTrack) { //if flashlight mode engaged

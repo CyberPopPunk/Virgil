@@ -11,9 +11,9 @@ Locations[] waypoint;
 int locIndex = 0;
 int prevLocIndex;
 
-Locations home = new Locations("home", 41.7359, -74.6773, 100, 255, 255, 0, 0, 0, "track1.mp3");
-Locations lab = new Locations("Lab", 41.7351, -74.6738, 140, 255, 100, 1, 1, 0, "track2.mp3");
-Locations hac = new Locations("hac", 41.7361, -74.6742, 60, 255, 230, 2, 4, 0, "track3.mp3");
+Locations home = new Locations("home", 41.7359, -74.6773, 100, 255, 255, 0, 0, 0, "../sounds/track1.mp3");
+Locations lab = new Locations("Lab", 41.7351, -74.6738, 140, 255, 100, 1, 1, 0, "../sounds/track2.mp3");
+Locations hac = new Locations("hac", 41.7361, -74.6742, 60, 255, 230, 2, 4, 0, "../sounds/track3.mp3");
 
 //allowable distance for detection of GPS (about 10m)
 float range = 0.0001;
@@ -32,6 +32,7 @@ int prevTrack = 1;
 Serial port;
 float currLat;
 float currLon;
+
 String input;
 Boolean receivedGPSData = false;
 
@@ -48,13 +49,13 @@ void setup() {
   track = new AudioPlayer[waypoint.length + 3];
   minim = new Minim(this);
 
-  track[bgMusic] = minim.loadFile("background.mp3");
+  track[bgMusic] = minim.loadFile("../sounds/background.mp3");
   println("background.mp3 file loaded");
 
-  track[noFixTrack] = minim.loadFile("noFixAlert.mp3");
+  track[noFixTrack] = minim.loadFile("../sounds/noFixAlert.mp3");
   println("noFixAlert file Loaded");
 
-  track[flTrack] = minim.loadFile("flashlight.mp3");
+  track[flTrack] = minim.loadFile("../sounds/flashlight.mp3");
   println("flashlight file Loaded!");
 
   for (int x = 3; x < track.length; x++) {
@@ -63,14 +64,14 @@ void setup() {
   }
 
   port = new Serial(this, "/dev/cu.SLAB_USBtoUART", 115200);
-  port.bufferUntil('\n');
-  delay(1000);
-  startup();
+  port.bufferUntil(10);
+  delay(2000);
   handshake();
+  startup();
 }
 
 void draw() {
-  println("draw Loop start");
+  //println("draw Loop start");
   if (firstContact == true) {
     if (receivedGPSData == true) {
       if (input != null) {
@@ -80,10 +81,6 @@ void draw() {
         } else if (input.equals("No Fix")) {  // use .equals() for string comparison because strings are objects in Java
           noFixAlert();
           delay(100);
-        } else if (input.equals("A")) {
-          println("A in Serial buffer");
-          port.clear();
-          delay(300);
         } else {
           float[] data = float(split(input, ","));
           currLat = data[0];
@@ -111,8 +108,8 @@ void draw() {
       }
       delay(100);
     }
-    askGPSData();
-    delay(3000);
+    //askGPSData();
+    //delay(3000);
   }
 }
 
@@ -123,15 +120,15 @@ void noFixAlert() {
 
 void startup() {
   delay(1200);
-  output(0, 255, 255, 1, 0, 5);
+  output(0, 255, 255, 1, 0, 7);
   AudioPlayer startup;
-  startup = minim.loadFile("startup.mp3");
+  startup = minim.loadFile("../sounds/startup.mp3");
   startup.play();
   while (startup.isPlaying()) {
     delay(100);
   }
-  output(0, 0, 0, 1, 0, 0); //blank
-  delay(1000);
+  //output(0, 0, 0, 0, 0, 0); //blank
+  delay(200);
   startupFinished = true;
   println("Startup Finished");
 }
